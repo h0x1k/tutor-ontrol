@@ -1,47 +1,17 @@
-version: '3.8'
+FROM python:3.11-slim
 
-services:
-  tutor-app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    ports:
-      - "8000:8000"  # Map host:container
-    volumes:
-      - .:/app
-    environment:
-      - PYTHONPATH=/app
-    networks:
-      - app-network
+WORKDIR /app
 
-  versioncontrol:
-    build:
-      context: .
-      dockerfile: Dockerfile.versioncontrol
-    ports:
-      - "8001:8001"  # Map host:container
-    volumes:
-      - vc_data:/app/repositories
-    environment:
-      - PYTHONPATH=/app
-    networks:
-      - app-network
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    git \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-  nginx:
-    image: nginx:alpine
-    ports:
-      - "80:80"
-    volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf
-    depends_on:
-      - tutor-app
-      - versioncontrol
-    networks:
-      - app-network
+COPY . .
 
-volumes:
-  vc_data:
+RUN pip install -r requirements.txt
 
-networks:
-  app-network:
-    driver: bridge
+EXPOSE 8001
+
+CMD ["python", "-m", "uvicorn", "version_control.main:app", "--host", "0.0.0.0", "--port", "8001"]

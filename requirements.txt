@@ -4,4 +4,3 @@ python-slugify==8.0.4
 django-cors-headers==4.7.0
 uvicorn==0.38.0
 fastapi==0.121.0
-netcat==0.0.1a0
