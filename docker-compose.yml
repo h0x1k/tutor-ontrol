@@ -31,22 +31,6 @@ services:
     networks:
       - app-network
 
-  vc-tester:
-    image: python:3.11-slim
-    volumes:
-      - .:/app
-    working_dir: /app
-    environment:
-      PYTHONPATH: /app
-    command: >
-      sh -c "pip install -r requirements.txt &&
-             echo 'VC Tester ready - keeping container running' &&
-             tail -f /dev/null"
-    depends_on:
-      - versioncontrol
-    networks:
-      - app-network
-
 volumes:
   vc_data:
 
