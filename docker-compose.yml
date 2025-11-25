@@ -6,7 +6,9 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - .:/app
+      - type: bind
+        source: .
+        target: /app
     environment:
       PYTHONPATH: /app
       ENVIRONMENT: development
@@ -21,8 +23,12 @@ services:
     ports:
       - "8001:8001"
     volumes:
-      - vc_data:/app/repositories
-      - ./version_control:/app/version_control
+      - type: volume
+        source: vc_data
+        target: /app/repositories
+      - type: bind
+        source: ./version_control
+        target: /app/version_control
     environment:
       PYTHONPATH: /app
       ENVIRONMENT: development
