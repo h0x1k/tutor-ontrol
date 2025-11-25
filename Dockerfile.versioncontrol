@@ -2,17 +2,25 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install only git (minimal)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy the entire project
 COPY . .
 
-# Install main application dependencies (which include uvicorn)
-RUN pip install -r requirements.txt
+# Debug: Check Python and pip
+RUN which python3 && which pip && python3 --version && pip --version
+
+# Debug: List files to verify requirements.txt exists
+RUN ls -la
+
+# Install dependencies with verbose output
+RUN pip install -r requirements.txt --verbose
+
+# Debug: Check if uvicorn is installed
+RUN pip list | grep uvicorn || echo "uvicorn not found"
+RUN which uvicorn || echo "uvicorn not in PATH"
 
 EXPOSE 8001
 
