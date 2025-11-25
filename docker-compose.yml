@@ -1,6 +1,15 @@
 version: '3.8'
 
 services:
+  frontend:
+    image: nginx:alpine
+    ports:
+      - "3000:80"
+    volumes:
+      - ./frontend/dist:/usr/share/nginx/html
+    networks:
+      - app-network
+
   tutor-app:
     build: .
     ports:
@@ -30,6 +39,7 @@ services:
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf
     depends_on:
+      - frontend
       - tutor-app
       - versioncontrol
     networks:
