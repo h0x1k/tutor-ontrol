@@ -1,18 +1,15 @@
-version: '3.8'
-
 services:
-  # Backend services only for development
   tutor-app:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.dev
     ports:
       - "8000:8000"
     volumes:
       - .:/app
     environment:
-      - PYTHONPATH=/app
-      - ENVIRONMENT=development
+      PYTHONPATH: /app
+      ENVIRONMENT: development
     command: python -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload
     networks:
       - app-network
@@ -20,29 +17,31 @@ services:
   versioncontrol:
     build:
       context: .
-      dockerfile: Dockerfile.versioncontrol
+      dockerfile: Dockerfile.dev
     ports:
       - "8001:8001"
     volumes:
       - vc_data:/app/repositories
       - ./version_control:/app/version_control
     environment:
-      - PYTHONPATH=/app
-      - ENVIRONMENT=development
+      PYTHONPATH: /app
+      ENVIRONMENT: development
+      VC_STORAGE_PATH: /app/repositories
     command: python -m uvicorn version_control.main:app --host 0.0.0.0 --port 8001 --reload
     networks:
       - app-network
 
-  # Optional: Add a test client for version control
   vc-tester:
     image: python:3.11-slim
     volumes:
-      - ./tests:/app/tests
-      - ./version_control:/app/version_control
+      - .:/app
     working_dir: /app
     environment:
-      - PYTHONPATH=/app
-    command: tail -f /dev/null  # Keep container running
+      PYTHONPATH: /app
+    command: >
+      sh -c "pip install -r requirements.txt &&
+             echo 'VC Tester ready - keeping container running' &&
+             tail -f /dev/null"
     depends_on:
       - versioncontrol
     networks:
