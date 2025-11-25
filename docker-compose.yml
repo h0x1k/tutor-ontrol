@@ -6,14 +6,11 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "8000"
+      - "8000:8000"  # Map host:container
     volumes:
       - .:/app
-      - tutor_data:/app/data
     environment:
       - PYTHONPATH=/app
-      - ENVIRONMENT=production
-    restart: unless-stopped
     networks:
       - app-network
 
@@ -22,14 +19,11 @@ services:
       context: .
       dockerfile: Dockerfile.versioncontrol
     ports:
-      - "8001"
+      - "8001:8001"  # Map host:container
     volumes:
-      - ./version_control:/app/version_control
       - vc_data:/app/repositories
     environment:
       - PYTHONPATH=/app
-      - ENVIRONMENT=production
-    restart: unless-stopped
     networks:
       - app-network
 
@@ -42,12 +36,10 @@ services:
     depends_on:
       - tutor-app
       - versioncontrol
-    restart: unless-stopped
     networks:
       - app-network
 
 volumes:
-  tutor_data:
   vc_data:
 
 networks:
