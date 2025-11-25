@@ -4,7 +4,6 @@ WORKDIR /app
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
-    netcat \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -15,5 +14,4 @@ COPY . .
 
 EXPOSE 8000
 
-# Use explicit host binding
-CMD ["python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+CMD ["python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
