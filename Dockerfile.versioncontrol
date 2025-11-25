@@ -2,25 +2,18 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install system dependencies including git
-RUN apt-get update && apt-get install -y \
+# Install only git (minimal dependencies)
+RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
-    && rm -rf /var/lib/apt/lists/* \
-    && apt-get clean
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements first for better caching
-COPY requirements.txt .
-
-# Install dependencies
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Copy the rest of the application
+# Copy the entire project
 COPY . .
 
-EXPOSE 8001
+# Install version control dependencies
+RUN pip install --no-cache-dir -r version_control/requirements.txt
 
-# Use a non-root user for security (optional)
-RUN useradd -m -r appuser && chown -R appuser /app
-USER appuser
+EXPOSE 8001
 
 CMD ["uvicorn", "version_control.main:app", "--host", "0.0.0.0", "--port", "8001"]
