@@ -11,19 +11,13 @@ services:
       - PYTHONPATH=/app
       - ENVIRONMENT=development
     command: python -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload
-    healthcheck:
-      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8000/health')"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-      start_period: 10s
     networks:
       - app-network
 
   versioncontrol:
     build:
       context: .
-      dockerfile: Dockerfile.versioncontrol.dev
+      dockerfile: Dockerfile.dev  # Use the SAME Dockerfile as tutor-app
     ports:
       - "8001:8001"
     volumes:
@@ -34,33 +28,22 @@ services:
       - ENVIRONMENT=development
       - VC_STORAGE_PATH=/app/repositories
     command: python -m uvicorn version_control.main:app --host 0.0.0.0 --port 8001 --reload
-    healthcheck:
-      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8001/health')"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-      start_period: 10s
     networks:
       - app-network
 
   vc-tester:
-    build:
-      context: .
-      dockerfile: Dockerfile.dev
+    image: python:3.11-slim
     volumes:
       - .:/app
     working_dir: /app
     environment:
       - PYTHONPATH=/app
     command: >
-      sh -c "pip install requests && 
-             echo '=== Version Control Tester Ready ===' &&
-             echo 'Test manually: python tests/test_versioncontrol.py' &&
-             echo 'Or run: docker-compose -f docker-compose.dev.yml exec vc-tester python tests/test_versioncontrol.py' &&
-             tail -f /dev/null"
+      sh -c "sleep 10 && 
+             pip install -r requirements.txt &&
+             python tests/test_versioncontrol.py"
     depends_on:
-      versioncontrol:
-        condition: service_healthy
+      - versioncontrol
     networks:
       - app-network
 
