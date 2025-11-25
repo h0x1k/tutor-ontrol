@@ -1,11 +1,8 @@
-version: '3.8'
-
 services:
-  # Backend services only for development
   tutor-app:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.dev
     ports:
       - "8000:8000"
     volumes:
@@ -14,13 +11,19 @@ services:
       - PYTHONPATH=/app
       - ENVIRONMENT=development
     command: python -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
     networks:
       - app-network
 
   versioncontrol:
     build:
       context: .
-      dockerfile: Dockerfile.versioncontrol
+      dockerfile: Dockerfile.versioncontrol.dev
     ports:
       - "8001:8001"
     volumes:
@@ -29,22 +32,35 @@ services:
     environment:
       - PYTHONPATH=/app
       - ENVIRONMENT=development
+      - VC_STORAGE_PATH=/app/repositories
     command: python -m uvicorn version_control.main:app --host 0.0.0.0 --port 8001 --reload
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8001/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
     networks:
       - app-network
 
-  # Optional: Add a test client for version control
   vc-tester:
-    image: python:3.11-slim
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
     volumes:
-      - ./tests:/app/tests
-      - ./version_control:/app/version_control
+      - .:/app
     working_dir: /app
     environment:
       - PYTHONPATH=/app
-    command: tail -f /dev/null  # Keep container running
+    command: >
+      sh -c "pip install requests && 
+             echo '=== Version Control Tester Ready ===' &&
+             echo 'Test manually: python tests/test_versioncontrol.py' &&
+             echo 'Or run: docker-compose -f docker-compose.dev.yml exec vc-tester python tests/test_versioncontrol.py' &&
+             tail -f /dev/null"
     depends_on:
-      - versioncontrol
+      versioncontrol:
+        condition: service_healthy
     networks:
       - app-network
 

@@ -10,11 +10,15 @@ app = FastAPI(
 # Add CORS for frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost", "http://frontend", "http://client"],
+    allow_origins=["*"],  # For development
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.get("/")
+async def root():
+    return {"message": "Tutor Control API is running"}
 
 @app.get("/health")
 async def health_check():
@@ -23,10 +27,3 @@ async def health_check():
 @app.get("/api/status")
 async def api_status():
     return {"status": "API is running"}
-
-# Add your API routes here
-@app.get("/api/test")
-async def test_endpoint():
-    return {"message": "Backend API is working"}
-
-# Your other existing routes...
