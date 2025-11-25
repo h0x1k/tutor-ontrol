@@ -1,32 +1,32 @@
 from fastapi import FastAPI
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
-import os
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(
-    title="Tutor Control",
-    description="Tutor Control Application",
+    title="Tutor Control API",
+    description="Backend API for Tutor Control application",
     version="1.0.0"
 )
 
-# Serve static files (CSS, JS, images)
-app.mount("/static", StaticFiles(directory="static"), name="static")
-
-# Serve the main HTML file
-@app.get("/")
-async def serve_frontend():
-    if os.path.exists("templates/index.html"):
-        return FileResponse("templates/index.html")
-    elif os.path.exists("static/index.html"):
-        return FileResponse("static/index.html")
-    else:
-        return {"message": "Tutor Control API is running - frontend files not found"}
+# Add CORS for frontend
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost", "http://frontend", "http://client"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.get("/health")
 async def health_check():
     return {"status": "healthy"}
 
-# Your API routes
 @app.get("/api/status")
 async def api_status():
     return {"status": "API is running"}
+
+# Add your API routes here
+@app.get("/api/test")
+async def test_endpoint():
+    return {"message": "Backend API is working"}
+
+# Your other existing routes...
