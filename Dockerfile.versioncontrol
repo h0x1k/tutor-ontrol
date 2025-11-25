@@ -2,7 +2,7 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install only git (minimal dependencies)
+# Install only git (minimal)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     && apt-get clean \
@@ -10,6 +10,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Copy the entire project
 COPY . .
+
+# Install main application dependencies (which include uvicorn)
+RUN pip install -r requirements.txt
 
 EXPOSE 8001
 
