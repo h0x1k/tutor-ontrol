@@ -6,10 +6,11 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - .:/app
+      - ".:/app"
+    working_dir: /app
     environment:
-      - PYTHONPATH=/app
-      - ENVIRONMENT=development
+      PYTHONPATH: /app
+      ENVIRONMENT: development
     command: python -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload
     networks:
       - app-network
@@ -17,35 +18,20 @@ services:
   versioncontrol:
     build:
       context: .
-      dockerfile: Dockerfile.dev  # Use the SAME Dockerfile as tutor-app
+      dockerfile: Dockerfile.dev
     ports:
       - "8001:8001"
     volumes:
-      - vc_data:/app/repositories
-      - ./version_control:/app/version_control
+      - "vc_data:/app/repositories"
+      - "./version_control:/app/version_control"
+    working_dir: /app
     environment:
-      - PYTHONPATH=/app
-      - ENVIRONMENT=development
-      - VC_STORAGE_PATH=/app/repositories
+      PYTHONPATH: /app
+      ENVIRONMENT: development
+      VC_STORAGE_PATH: /app/repositories
     command: python -m uvicorn version_control.main:app --host 0.0.0.0 --port 8001 --reload
     networks:
       - app-network
-
-  vc-tester:
-  image: python:3.11-slim
-  volumes:
-    - .:/app
-  working_dir: /app
-  environment:
-    - PYTHONPATH=/app
-  command: >
-    sh -c "pip install -r requirements.txt &&
-           echo 'VC Tester ready - keeping container running' &&
-           tail -f /dev/null"
-  depends_on:
-    - versioncontrol
-  networks:
-    - app-network
 
 volumes:
   vc_data:
