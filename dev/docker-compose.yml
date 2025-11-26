@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  backend:
+    build: ./backend
+    container_name: tutor-backend-dev
+    volumes:
+      - dev_db_data:/app/data
+      - dev_static_volume:/app/static
+    environment:
+      - DEBUG=True
+      - DB_PATH=/app/data/dev_db.sqlite3
+    networks:
+      - dev-network
+
+  nginx:
+    build: 
+      context: ./nginx
+      dockerfile: Dockerfile
+    container_name: tutor-nginx-dev
+    ports:
+      - "8080:80"  # Different port for dev
+    volumes:
+      - dev_static_volume:/app/static
+    depends_on:
+      - backend
+    networks:
+      - dev-network
+
+volumes:
+  dev_db_data:
+  dev_static_volume:
+
+networks:
+  dev-network:
+    driver: bridge

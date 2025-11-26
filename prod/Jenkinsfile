@@ -1,0 +1,124 @@
+pipeline {
+    agent any
+    
+    environment {
+        DOCKER_REGISTRY = 'localhost:5000'
+        BACKEND_IMAGE = "${DOCKER_REGISTRY}/backend-prod"
+        NGINX_IMAGE = "${DOCKER_REGISTRY}/nginx-prod"
+        REPO_URL = 'https://github.com/h0x1k/tutor-ontrol'
+    }
+    
+    stages {
+        stage('Checkout Latest Code') {
+            steps {
+                checkout([
+                    $class: 'GitSCM',
+                    branches: [[name: '*/dev']],  // Get latest from dev
+                    userRemoteConfigs: [[url: REPO_URL]]
+                ])
+            }
+        }
+        
+        stage('Sync Dev to Prod') {
+            steps {
+                sh '''
+                    # Copy backend from dev to prod
+                    cp -r dev/backend/* prod/backend/
+                    
+                    # Copy frontend from dev to prod  
+                    cp -r dev/frontend/* prod/frontend/
+                    
+                    # Copy updated docker files
+                    cp dev/docker-compose.yml prod/docker-compose.yml
+                    cp dev/backend/Dockerfile prod/backend/Dockerfile
+                    cp dev/frontend/Dockerfile prod/frontend/Dockerfile
+                '''
+            }
+        }
+        
+        stage('Run Prod Tests') {
+            steps {
+                dir('prod') {
+                    sh '''
+                        docker compose run --rm backend python manage.py test --no-input
+                    '''
+                }
+            }
+            post {
+                success {
+                    echo 'Prod tests passed!'
+                }
+                failure {
+                    error('Prod tests failed!')
+                }
+            }
+        }
+        
+        stage('Build Prod Images') {
+            steps {
+                dir('prod') {
+                    sh """
+                        docker compose build
+                    """
+                }
+            }
+        }
+        
+        stage('Version and Push Prod Images') {
+            steps {
+                script {
+                    def backendTag = "prod-build-${BUILD_NUMBER}"
+                    def nginxTag = "prod-build-${BUILD_NUMBER}"
+                    
+                    sh """
+                        docker tag tutor-ontrol-backend:latest ${BACKEND_IMAGE}:${backendTag}
+                        docker tag tutor-ontrol-backend:latest ${BACKEND_IMAGE}:latest
+                        docker tag tutor-ontrol-nginx:latest ${NGINX_IMAGE}:${nginxTag}
+                        docker tag tutor-ontrol-nginx:latest ${NGINX_IMAGE}:latest
+                        
+                        docker push ${BACKEND_IMAGE}:${backendTag}
+                        docker push ${BACKEND_IMAGE}:latest
+                        docker push ${NGINX_IMAGE}:${nginxTag}
+                        docker push ${NGINX_IMAGE}:latest
+                    """
+                }
+            }
+        }
+        
+        stage('Deploy to Production') {
+            steps {
+                dir('prod') {
+                    sh """
+                        docker compose down
+                        docker compose up -d
+                        docker compose ps
+                    """
+                }
+            }
+        }
+        
+        stage('Update Git Repository') {
+            steps {
+                sh '''
+                    git config user.email "jenkins@ci.com"
+                    git config user.name "Jenkins CI"
+                    
+                    # Commit and push prod updates
+                    git add prod/
+                    git commit -m "Auto-update prod from dev (Build ${BUILD_NUMBER})"
+                    git push origin main
+                '''
+            }
+        }
+    }
+    
+    post {
+        always {
+            echo 'Prod pipeline completed'
+            sh 'docker system prune -f'
+        }
+        success {
+            echo 'Production updated successfully from dev!'
+        }
+    }
+}

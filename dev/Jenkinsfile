@@ -1,0 +1,88 @@
+pipeline {
+    agent any
+    
+    environment {
+        DOCKER_REGISTRY = 'localhost:5000'
+        BACKEND_IMAGE = "${DOCKER_REGISTRY}/backend-dev"
+        NGINX_IMAGE = "${DOCKER_REGISTRY}/nginx-dev"
+        REPO_URL = 'https://github.com/h0x1k/tutor-ontrol'
+    }
+    
+    triggers {
+        githubPush()
+    }
+    
+    stages {
+        stage('Checkout Dev Code') {
+            steps {
+                checkout([
+                    $class: 'GitSCM',
+                    branches: [[name: '*/dev']],
+                    extensions: [
+                        [
+                            $class: 'RelativeTargetDirectory',
+                            relativeTargetDir: 'dev'
+                        ]
+                    ],
+                    userRemoteConfigs: [[url: REPO_URL]]
+                ])
+            }
+        }
+        
+        stage('Run Dev Tests') {
+            steps {
+                dir('dev') {
+                    sh '''
+                        docker compose run --rm backend python manage.py test --no-input
+                    '''
+                }
+            }
+            post {
+                success {
+                    echo 'Dev tests passed!'
+                }
+                failure {
+                    error('Dev tests failed!')
+                }
+            }
+        }
+        
+        stage('Build Dev Images') {
+            steps {
+                dir('dev') {
+                    sh """
+                        docker compose build
+                    """
+                }
+            }
+        }
+        
+        stage('Deploy to Dev') {
+            steps {
+                dir('dev') {
+                    sh """
+                        docker compose down
+                        docker compose up -d
+                    """
+                }
+            }
+        }
+        
+        stage('Trigger Prod Update') {
+            when {
+                expression { currentBuild.result == 'SUCCESS' }
+            }
+            steps {
+                build job: 'tutor-ontrol-prod', wait: false
+                echo 'Prod update triggered successfully'
+            }
+        }
+    }
+    
+    post {
+        always {
+            echo 'Dev pipeline completed'
+            sh 'docker system prune -f'
+        }
+    }
+}

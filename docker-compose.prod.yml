@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  frontend:
+    image: ${DOCKER_REGISTRY}/${PROJECT_NAME}-frontend:${BUILD_NUMBER:-latest}
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  tutor-app:
+    image: ${DOCKER_REGISTRY}/${PROJECT_NAME}-tutor-app:${BUILD_NUMBER:-latest}
+    restart: unless-stopped
+    environment:
+      - ENVIRONMENT=production
+      - PYTHONPATH=/app
+    networks:
+      - app-network
+
+  versioncontrol:
+    image: ${DOCKER_REGISTRY}/${PROJECT_NAME}-versioncontrol:${BUILD_NUMBER:-latest}
+    restart: unless-stopped
+    environment:
+      - ENVIRONMENT=production
+      - PYTHONPATH=/app
+      - VC_STORAGE_PATH=/app/repositories
+    volumes:
+      - vc_data:/app/repositories
+    networks:
+      - app-network
+
+  nginx:
+    image: nginx:alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.prod.conf:/etc/nginx/nginx.conf
+      - ./ssl:/etc/nginx/ssl
+    depends_on:
+      - frontend
+      - tutor-app
+      - versioncontrol
+    networks:
+      - app-network
+
+volumes:
+  vc_data:
+
+networks:
+  app-network:
+    driver: bridge
