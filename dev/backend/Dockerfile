@@ -16,17 +16,14 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy ALL files from current directory to /app in container
 COPY . .
 
-# Check what files were copied
-RUN ls -la /app/
-
 # Create necessary directories
 RUN mkdir -p /app/data /app/static /app/media
 
 # Make sure manage.py is executable
 RUN chmod +x manage.py
 
-# Check if manage.py exists before running
-RUN ls -la manage.py
+# Check what files we have
+RUN ls -la /app/
 
-# Simple command
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+# Only run migrations and then start server
+CMD ["sh", "-c", "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"]
