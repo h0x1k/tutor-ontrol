@@ -5,27 +5,16 @@ pipeline {
         DOCKER_REGISTRY = 'localhost:5000'
         BACKEND_IMAGE = "${DOCKER_REGISTRY}/backend-dev"
         NGINX_IMAGE = "${DOCKER_REGISTRY}/nginx-dev"
-        REPO_URL = 'https://github.com/h0x1k/tutor-ontrol'
     }
     
     triggers {
-        githubPush()
+        pollSCM('* * * * *')
     }
     
     stages {
-        stage('Checkout Dev Code') {
+        stage('Checkout Code') {
             steps {
-                checkout([
-                    $class: 'GitSCM',
-                    branches: [[name: '*/dev']],
-                    extensions: [
-                        [
-                            $class: 'RelativeTargetDirectory',
-                            relativeTargetDir: 'dev'
-                        ]
-                    ],
-                    userRemoteConfigs: [[url: REPO_URL]]
-                ])
+                checkout scm
             }
         }
         

@@ -5,33 +5,25 @@ pipeline {
         DOCKER_REGISTRY = 'localhost:5000'
         BACKEND_IMAGE = "${DOCKER_REGISTRY}/backend-prod"
         NGINX_IMAGE = "${DOCKER_REGISTRY}/nginx-prod"
-        REPO_URL = 'https://github.com/h0x1k/tutor-ontrol'
     }
     
     stages {
-        stage('Checkout Latest Code') {
+        stage('Checkout Code') {
             steps {
-                checkout([
-                    $class: 'GitSCM',
-                    branches: [[name: '*/dev']],  // Get latest from dev
-                    userRemoteConfigs: [[url: REPO_URL]]
-                ])
+                checkout scm
             }
         }
         
         stage('Sync Dev to Prod') {
             steps {
                 sh '''
-                    # Copy backend from dev to prod
+                    # Copy updated files from dev to prod
                     cp -r dev/backend/* prod/backend/
-                    
-                    # Copy frontend from dev to prod  
                     cp -r dev/frontend/* prod/frontend/
+                    cp -r dev/nginx/* prod/nginx/
                     
-                    # Copy updated docker files
+                    # Update prod docker-compose with any dev changes
                     cp dev/docker-compose.yml prod/docker-compose.yml
-                    cp dev/backend/Dockerfile prod/backend/Dockerfile
-                    cp dev/frontend/Dockerfile prod/frontend/Dockerfile
                 '''
             }
         }
@@ -81,6 +73,10 @@ pipeline {
                         docker push ${NGINX_IMAGE}:${nginxTag}
                         docker push ${NGINX_IMAGE}:latest
                     """
+                    
+                    echo "Production images published:"
+                    echo "Backend: ${BACKEND_IMAGE}:${backendTag}"
+                    echo "Nginx: ${NGINX_IMAGE}:${nginxTag}"
                 }
             }
         }
@@ -97,16 +93,20 @@ pipeline {
             }
         }
         
-        stage('Update Git Repository') {
+        stage('Update Main Branch') {
             steps {
                 sh '''
                     git config user.email "jenkins@ci.com"
                     git config user.name "Jenkins CI"
                     
-                    # Commit and push prod updates
+                    # Commit prod updates to main branch
+                    git checkout main
                     git add prod/
-                    git commit -m "Auto-update prod from dev (Build ${BUILD_NUMBER})"
+                    git commit -m "Auto-update prod from dev (Build ${BUILD_NUMBER})" || echo "No changes to commit"
                     git push origin main
+                    
+                    # Switch back to dev for next build
+                    git checkout dev
                 '''
             }
         }

@@ -19,7 +19,7 @@ services:
       dockerfile: Dockerfile
     container_name: tutor-nginx-dev
     ports:
-      - "8080:80"  # Different port for dev
+      - "8080:80"
     volumes:
       - dev_static_volume:/app/static
     depends_on:

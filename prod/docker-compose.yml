@@ -19,7 +19,7 @@ services:
       dockerfile: Dockerfile
     container_name: tutor-nginx-prod
     ports:
-      - "80:80"  # Standard port for prod
+      - "80:80"
     volumes:
       - prod_static_volume:/app/static
     depends_on:
