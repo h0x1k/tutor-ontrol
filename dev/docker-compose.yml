@@ -1,9 +1,8 @@
-version: '3.8'
 services:
   nginx:
     build:
-      context: .
-      dockerfile: Dockerfile.frontend  # Change this line
+      context: ./nginx/frontend
+      dockerfile: Dockerfile.frontend
     ports:
       - "8080:80"
     container_name: tutor-control-nginx
