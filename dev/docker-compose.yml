@@ -1,36 +1,9 @@
+version: '3.8'
 services:
-  backend:
-    build: 
-      context: ./backend
-      dockerfile: Dockerfile
-    container_name: tutor-backend-dev
-    volumes:
-      - ./backend:/app
-      - dev_db_data:/app/data
-    environment:
-      - DEBUG=True
-    ports:
-      - "8000:8000"
-    networks:
-      - dev-network
-
   nginx:
-    build: 
-      context: ./nginx
-      dockerfile: Dockerfile
-    container_name: tutor-nginx-dev
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend  # Change this line
     ports:
       - "8080:80"
-    volumes:
-      - ./backend/static:/app/static  # Backend static files
-    depends_on:
-      - backend
-    networks:
-      - dev-network
-
-volumes:
-  dev_db_data:
-
-networks:
-  dev-network:
-    driver: bridge
+    container_name: tutor-control-nginx
