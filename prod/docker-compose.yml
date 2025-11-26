@@ -13,8 +13,8 @@ services:
 
   nginx:
     build:
-      context: ./nginx/frontend
-      dockerfile: Dockerfile.frontend
+      context: ./nginx
+      dockerfile: frontend/Dockerfile.frontend
     container_name: tutor-nginx-prod
     ports:
       - "80:80"
