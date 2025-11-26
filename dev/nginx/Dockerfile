@@ -3,19 +3,19 @@ FROM nginx:alpine
 # Copy nginx configuration
 COPY nginx.conf /etc/nginx/nginx.conf
 
-# Copy frontend files
-COPY . /app/
+# Create and set permissions for nginx directories
+RUN mkdir -p /usr/share/nginx/html && \
+    chown -R nginx:nginx /usr/share/nginx/html && \
+    chmod -R 755 /usr/share/nginx/html
 
-# Fix permissions - nginx runs as user nginx
-RUN chown -R nginx:nginx /app && \
-    chmod -R 755 /app && \
-    chmod 644 /app/index.html
+# Copy frontend files to standard nginx location
+COPY . /usr/share/nginx/html/
 
-# Create nginx user directory
-RUN mkdir -p /var/cache/nginx && \
-    chown -R nginx:nginx /var/cache/nginx
+# Fix permissions
+RUN chown -R nginx:nginx /usr/share/nginx/html && \
+    chmod -R 644 /usr/share/nginx/html/* && \
+    chmod 755 /usr/share/nginx/html
 
 EXPOSE 80
 
-# Run as nginx user
 CMD ["nginx", "-g", "daemon off;"]
