@@ -1,8 +1,8 @@
 services:
   backend:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: dev/backend/Dockerfile
     container_name: tutor-backend-dev
     ports:
       - "8000:8000"
