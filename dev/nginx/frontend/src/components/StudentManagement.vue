@@ -195,8 +195,8 @@ import { useRouter } from 'vue-router';
 import axios from 'axios';
 import { Modal } from 'bootstrap';
 
-// Устанавливаем базовый URL
-axios.defaults.baseURL = 'http://localhost:8000';
+// Use relative paths - nginx will proxy /api/ to backend over HTTPS
+axios.defaults.baseURL = '';
 
 export default {
   name: 'StudentManagement',
