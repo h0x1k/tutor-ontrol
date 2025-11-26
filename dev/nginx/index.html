@@ -19,10 +19,10 @@
             padding: 40px;
             border-radius: 10px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            text-align: center;
         }
         h1 {
             color: #333;
-            text-align: center;
             margin-bottom: 30px;
         }
         .status {
@@ -30,17 +30,57 @@
             color: white;
             padding: 10px 20px;
             border-radius: 5px;
-            text-align: center;
             margin-bottom: 20px;
+            display: inline-block;
+        }
+        .app-link {
+            display: inline-block;
+            background: #007bff;
+            color: white;
+            padding: 15px 30px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: bold;
+            margin: 20px 0;
+            transition: background 0.3s;
+        }
+        .app-link:hover {
+            background: #0056b3;
+            transform: translateY(-2px);
+        }
+        .endpoints {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+            text-align: left;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>🎯 Tutor Control System</h1>
-        <div class="status">✅ Frontend is Running</div>
-        <p>This is the Vue.js frontend served by Nginx on port 8080</p>
-        <p><strong>Backend API:</strong> <a href="http://localhost:8000">http://localhost:8000</a></p>
+        <div class="status">✅ Development Environment</div>
+        
+        <p>Welcome to the Tutor Control System development environment</p>
+        
+        <!-- Main Vue App Link -->
+        <a href="/app/" class="app-link">
+            🚀 Launch Main Vue Application
+        </a>
+        
+        <div class="endpoints">
+            <h3>Available Services:</h3>
+            <ul>
+                <li><strong>Main Vue App:</strong> <a href="/app/">/app/</a></li>
+                <li><strong>Backend API:</strong> <a href="/api/">/api/</a></li>
+                <li><strong>Django Admin:</strong> <a href="/admin/">/admin/</a></li>
+                <li><strong>Direct Backend:</strong> <a href="http://localhost:8000">http://localhost:8000</a></li>
+            </ul>
+        </div>
+        
+        <p><em>This page is served by Nginx. Click the button above to access the main Vue.js application.</em></p>
     </div>
 </body>
 </html>
