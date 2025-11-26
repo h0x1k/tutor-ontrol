@@ -1,4 +1,31 @@
 services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: tutor-backend-dev
+    ports:
+      - "8000:8000"
+    volumes:
+      - dev_db_data:/app/data
+    environment:
+      - DEBUG=True
+      - DB_PATH=/app/data/dev_db.sqlite3
+    networks:
+      - dev-network
+
+  frontend:
+    build:
+      context: ./nginx/frontend
+      dockerfile: Dockerfile.frontend
+    container_name: tutor-frontend-dev
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+    networks:
+      - dev-network
+
   versioncontrol:
     build:
       context: ../version_control
@@ -8,6 +35,9 @@ services:
       - "8001:8001"
     networks:
       - dev-network
+
+volumes:
+  dev_db_data:
 
 networks:
   dev-network:

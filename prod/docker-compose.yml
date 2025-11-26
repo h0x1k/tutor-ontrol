@@ -1,0 +1,35 @@
+services:
+  backend:
+    build: ./backend
+    container_name: tutor-backend-prod
+    volumes:
+      - prod_db_data:/app/data
+      - prod_static_volume:/app/static
+    environment:
+      - DEBUG=False
+      - DB_PATH=/app/data/prod_db.sqlite3
+    networks:
+      - prod-network
+
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: frontend/Dockerfile.frontend
+    container_name: tutor-nginx-prod
+    ports:
+      - "80:80"
+    volumes:
+      - prod_static_volume:/app/static
+    depends_on:
+      - backend
+    networks:
+      - prod-network
+
+volumes:
+  prod_db_data:
+  prod_static_volume:
+
+networks:
+  prod-network:
+    driver: bridge
+
