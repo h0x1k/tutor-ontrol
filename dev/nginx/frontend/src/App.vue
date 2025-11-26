@@ -6,14 +6,16 @@
   </template>
   
   <script>
-  export default {
-    name: 'App',
-  };
   import { onBeforeMount } from 'vue';
   import axios from 'axios';
   import Cookies from 'js-cookie';
 
-  onBeforeMount(() => {
-    axios.defaults.headers.common['X-CSRFToken'] = Cookies.get("csrftoken");
-  })
+  export default {
+    name: 'App',
+    setup() {
+      onBeforeMount(() => {
+        axios.defaults.headers.common['X-CSRFToken'] = Cookies.get("csrftoken");
+      });
+    }
+  };
   </script>

@@ -3,7 +3,7 @@ import vue from '@vitejs/plugin-vue'
 
 export default defineConfig({
   plugins: [vue()],
-  base: './',  // Important: Use relative paths
+  base: '/',  // Use absolute paths for production
   build: {
     outDir: 'dist',
     assetsDir: 'assets'
