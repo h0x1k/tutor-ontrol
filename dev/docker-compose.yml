@@ -9,17 +9,10 @@ services:
       - dev_db_data:/app/data
     environment:
       - DEBUG=True
-      - DB_PATH=/app/data/dev_db.sqlite3
     ports:
       - "8000:8000"
     networks:
       - dev-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
 
   nginx:
     build: 
@@ -29,10 +22,9 @@ services:
     ports:
       - "8080:80"
     volumes:
-      - ./backend/static:/app/static
+      - ./backend/static:/app/static  # Backend static files
     depends_on:
-      backend:
-        condition: service_healthy
+      - backend
     networks:
       - dev-network
 
