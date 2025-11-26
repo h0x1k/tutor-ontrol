@@ -19,11 +19,15 @@ pipeline {
                 sh '''
                     # Copy updated files from dev to prod
                     cp -r dev/backend/* prod/backend/
-                    cp -r dev/frontend/* prod/frontend/
-                    cp -r dev/nginx/* prod/nginx/
                     
-                    # Update prod docker-compose with any dev changes
-                    cp dev/docker-compose.yml prod/docker-compose.yml
+                    # Copy frontend files (create directory if it doesn't exist)
+                    mkdir -p prod/nginx/frontend
+                    cp -r dev/nginx/frontend/* prod/nginx/frontend/
+                    
+                    # Keep prod-specific nginx.conf (don't overwrite with dev version)
+                    # The prod nginx.conf handles both frontend and backend
+                    
+                    # Keep prod docker-compose.yml (it has different config than dev)
                 '''
             }
         }

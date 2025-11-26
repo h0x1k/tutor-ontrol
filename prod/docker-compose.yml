@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   backend:
     build: ./backend
@@ -14,9 +12,9 @@ services:
       - prod-network
 
   nginx:
-    build: 
+    build:
       context: ./nginx
-      dockerfile: Dockerfile
+      dockerfile: frontend/Dockerfile.frontend
     container_name: tutor-nginx-prod
     ports:
       - "80:80"
