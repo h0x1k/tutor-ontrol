@@ -75,7 +75,7 @@ pipeline {
             steps {
                 sh '''
                     sleep 5
-                    curl -f http://localhost:8080/ || echo "Frontend health check failed"
+                    curl -f http://localhost/ || echo "Frontend health check failed"
                     curl -f http://localhost:8001/health || echo "Version control health check failed"
                 '''
             }

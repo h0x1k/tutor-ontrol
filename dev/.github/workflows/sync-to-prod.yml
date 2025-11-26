@@ -1,0 +1,80 @@
+name: Auto-Sync Dev to Prod
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  sync-to-prod:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout Dev Repository
+        uses: actions/checkout@v4
+        with:
+          path: dev-repo
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Checkout Prod Repository
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ secrets.PROD_REPO }}  # e.g., YOUR_USERNAME/tutor-ontrol-prod
+          path: prod-repo
+          token: ${{ secrets.PROD_REPO_TOKEN }}  # Personal Access Token with repo access
+          ref: main
+      
+      - name: Sync Backend Files
+        run: |
+          echo "🔄 Syncing backend files..."
+          if [ -d "dev-repo/backend" ]; then
+            mkdir -p prod-repo/backend
+            cp -r dev-repo/backend/* prod-repo/backend/ 2>/dev/null || true
+            echo "✅ Backend files synced"
+          else
+            echo "⚠️ Backend directory not found in dev repo"
+          fi
+      
+      - name: Sync Frontend Files
+        run: |
+          echo "🔄 Syncing frontend files..."
+          if [ -d "dev-repo/nginx/frontend" ]; then
+            mkdir -p prod-repo/nginx/frontend
+            cp -r dev-repo/nginx/frontend/* prod-repo/nginx/frontend/ 2>/dev/null || true
+            echo "✅ Frontend files synced"
+          else
+            echo "⚠️ Frontend directory not found in dev repo"
+          fi
+      
+      - name: Sync Version Control (if exists)
+        run: |
+          if [ -d "dev-repo/version_control" ]; then
+            echo "🔄 Syncing version control..."
+            mkdir -p prod-repo/version_control
+            cp -r dev-repo/version_control/* prod-repo/version_control/ 2>/dev/null || true
+            echo "✅ Version control synced"
+          fi
+      
+      - name: Commit and Push to Prod
+        working-directory: prod-repo
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "📝 Changes detected, committing to prod..."
+            git add .
+            git commit -m "Auto-merge from dev (Commit ${{ github.sha }})" || exit 0
+            git push origin main || echo "Push failed - check PROD_REPO_TOKEN"
+            echo "✅ Changes pushed to prod repository"
+          else
+            echo "ℹ️ No changes to commit"
+          fi
+      
+      - name: Summary
+        run: |
+          echo "✅ Auto-sync completed"
+          echo "📝 Dev commit: ${{ github.sha }}"
+          echo "🔗 Check prod repo: ${{ secrets.PROD_REPO }}"
+

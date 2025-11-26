@@ -1,187 +1,261 @@
-# CI/CD Pipeline Documentation
+# CI/CD Pipeline Documentation - Separate Repositories
 
-This project uses **both Jenkins and GitHub Actions** for CI/CD automation.
+This project uses **separate repositories** for development and production, each with its own CI/CD automation.
+
+## 🏗️ Repository Structure
+
+```
+web/
+├── tutor-ontrol-dev/          ← Development Repository
+│   ├── backend/
+│   ├── nginx/
+│   ├── docker-compose.yml
+│   ├── Jenkinsfile
+│   └── .github/workflows/
+│
+└── tutor-ontrol-prod/          ← Production Repository
+    ├── backend/
+    ├── nginx/
+    ├── docker-compose.yml
+    ├── Jenkinsfile
+    └── .github/workflows/
+```
 
 ## 🚀 Workflow Overview
 
 ### Development Flow
-1. **Developer** makes changes in `dev` branch
-2. **Push to dev** triggers:
-   - Jenkins pipeline (if Jenkins is configured)
-   - GitHub Actions workflow
-3. **Dev environment** is automatically built and deployed
+
+1. **Developer** works in `tutor-ontrol-dev` repository
+2. **Push to main** triggers:
+   - GitHub Actions workflow (automatic)
+   - Jenkins pipeline (if configured)
+3. **Dev environment** is automatically built, tested, and deployed
 4. **Tests** are run automatically
 
 ### Production Flow
-1. **When dev branch is updated**, production pipeline:
-   - Syncs files from `dev/` to `prod/`
-   - Runs production tests
-   - Builds production Docker images
-   - Deploys to production
-   - Updates `main` branch with prod changes
 
-## 📋 Jenkins Setup
+1. **Copy tested code** from dev to `tutor-ontrol-prod` repository
+2. **Push to main** triggers:
+   - GitHub Actions workflow (automatic)
+   - Jenkins pipeline (manual trigger recommended)
+3. **Production environment** is built, tested, and deployed
+4. **Health checks** verify deployment
+
+## 📋 GitHub Actions Setup
+
+### Dev Repository Workflow
+
+**File:** `tutor-ontrol-dev/.github/workflows/ci-cd.yml`
+
+**Triggers:**
+- Push to `main` branch
+- Pull requests to `main` branch
+
+**What it does:**
+- Builds backend Docker image
+- Builds frontend Docker image
+- Runs backend tests
+- Verifies Docker images
+
+**Note:** This validates code but does NOT deploy automatically.
+
+### Prod Repository Workflow
+
+**File:** `tutor-ontrol-prod/.github/workflows/deploy.yml`
+
+**Triggers:**
+- Push to `main` branch
+- Manual trigger via GitHub UI
+
+**What it does:**
+- Builds production backend Docker image
+- Builds production frontend Docker image
+- Runs production tests
+- Verifies Docker images
+
+**Note:** This validates code but does NOT deploy automatically.
+
+## 🔧 Jenkins Setup
 
 ### Prerequisites
 - Jenkins server running
 - Docker installed on Jenkins agent
 - Jenkins credentials configured (if using Docker registry)
 
-### Jenkins Pipelines
+### Dev Repository Pipeline
 
-#### Dev Pipeline (`dev/Jenkinsfile`)
-**Triggers:** Push to `dev` branch
+**File:** `tutor-ontrol-dev/Jenkinsfile`
+
+**Triggers:**
+- Push to `main` branch (if webhook configured)
+- Manual trigger
 
 **Stages:**
-1. Checkout code
+1. Checkout code from `tutor-ontrol-dev` repo
 2. Build Frontend Docker image
 3. Build Backend Docker image
-4. Build Version Control Docker image
-5. Run tests
-6. Deploy to dev environment
-7. Health checks
+4. Run tests
+5. Deploy to dev environment
+6. Health checks
 
 **To use:**
 ```bash
 # In Jenkins, create a new pipeline job
-# Point it to: dev/Jenkinsfile
-# Configure to trigger on push to dev branch
+# Point it to: tutor-ontrol-dev/Jenkinsfile
+# Configure to trigger on push to main branch
 ```
 
-#### Prod Pipeline (`prod/Jenkinsfile`)
-**Triggers:** Manual or scheduled
+### Prod Repository Pipeline
+
+**File:** `tutor-ontrol-prod/Jenkinsfile`
+
+**Triggers:**
+- Manual trigger (recommended for production)
+- Scheduled (if configured)
 
 **Stages:**
-1. Checkout code
-2. Sync dev to prod (copy files)
-3. Run production tests
-4. Build production images
-5. Tag and push images
-6. Deploy to production
-7. Production health checks
-8. Update main branch
+1. Checkout code from `tutor-ontrol-prod` repo
+2. Build Frontend Docker image
+3. Build Backend Docker image
+4. Run tests
+5. Deploy to production environment
+6. Production health checks
 
 **To use:**
 ```bash
 # In Jenkins, create a new pipeline job
-# Point it to: prod/Jenkinsfile
-# Can be triggered manually or on schedule
+# Point it to: tutor-ontrol-prod/Jenkinsfile
+# Set to manual trigger for safety
 ```
-
-## 🔄 GitHub Actions Setup
-
-### Workflows
-
-#### Dev CI/CD (`.github/workflows/dev-ci.yml`)
-**Triggers:**
-- Push to `dev` branch
-- Pull requests to `dev` branch
-
-**What it does:**
-- Builds all Docker images
-- Runs tests
-- Deploys to dev environment (on push only)
-- Runs health checks
-
-#### Production Deployment (`.github/workflows/prod-deploy.yml`)
-**Triggers:**
-- Push to `dev` branch (when files in `dev/` or `version_control/` change)
-- Manual trigger via GitHub UI
-
-**What it does:**
-- Syncs files from `dev/` to `prod/`
-- Runs production tests
-- Builds production images
-- Deploys to production
-- Updates `main` branch
-
-## 🔧 Configuration
-
-### Environment Variables
-
-**Jenkins:**
-- `DOCKER_REGISTRY` - Docker registry URL (default: `localhost:5000`)
-- `BACKEND_IMAGE` - Backend image name
-- `FRONTEND_IMAGE` - Frontend image name
-- `VERSIONCONTROL_IMAGE` - Version control image name
-
-**GitHub Actions:**
-- Uses GitHub Actions environment by default
-- Can be configured in repository settings → Secrets
-
-### Docker Compose Files
-
-- **Dev:** `dev/docker-compose.yml`
-- **Prod:** `prod/docker-compose.yml`
 
 ## 📝 How to Use
 
-### Automatic Deployment (Recommended)
+### Development Workflow
 
-1. **Make changes** in `dev` branch
-2. **Commit and push:**
+1. **Work in dev repository:**
+   ```bash
+   cd tutor-ontrol-dev
+   # Make changes to backend/ or nginx/
+   ```
+
+2. **Test locally:**
+   ```bash
+   docker-compose up -d
+   # Test at http://localhost
+   ```
+
+3. **Commit and push:**
    ```bash
    git add .
    git commit -m "Your changes"
-   git push origin dev
+   git push origin main
    ```
-3. **Automatic triggers:**
+
+4. **Automatic triggers:**
    - GitHub Actions will run automatically
-   - Jenkins will run if configured to watch the repo
+   - Jenkins will deploy if configured
 
-### Manual Production Deployment
+### Production Deployment
 
-**Via GitHub:**
-1. Go to Actions tab
-2. Select "Production Deployment"
-3. Click "Run workflow"
+1. **Copy tested code to prod:**
+   ```bash
+   cd tutor-ontrol-prod
+   # Copy files from dev (or use your preferred method)
+   cp -r ../tutor-ontrol-dev/backend/* ./backend/
+   cp -r ../tutor-ontrol-dev/nginx/* ./nginx/
+   ```
 
-**Via Jenkins:**
-1. Open Jenkins dashboard
-2. Find "Production Deployment" job
-3. Click "Build Now"
+2. **Review and commit:**
+   ```bash
+   git add .
+   git commit -m "Deploy: Release v1.0.0"
+   git push origin main
+   ```
+
+3. **Deploy:**
+   - **Via Jenkins:** Click "Build Now" in Jenkins dashboard
+   - **Manual:** `docker-compose up -d` in prod folder
 
 ## 🧪 Testing
 
 ### Local Testing
-```bash
-# Test dev environment
-cd dev
-docker-compose up -d
 
-# Test prod environment
-cd prod
+**Dev Environment:**
+```bash
+cd tutor-ontrol-dev
 docker-compose up -d
+# Access at http://localhost
+```
+
+**Prod Environment:**
+```bash
+cd tutor-ontrol-prod
+docker-compose up -d
+# Access at http://localhost
 ```
 
 ### Health Checks
-- Dev Frontend: `http://localhost:8080/`
-- Dev Version Control: `http://localhost:8001/health`
-- Prod: `http://localhost/version-control/health`
+
+- **Dev Frontend:** `http://localhost/`
+- **Dev Backend:** `http://localhost:8000/api/`
+- **Prod Frontend:** `http://localhost/`
+- **Prod Backend:** `http://localhost/api/`
 
 ## 🔍 Monitoring
+
+### GitHub Actions
+- **Dev Repo:** `https://github.com/YOUR_USERNAME/tutor-ontrol-dev/actions`
+- **Prod Repo:** `https://github.com/YOUR_USERNAME/tutor-ontrol-prod/actions`
+- View workflow runs and logs
 
 ### Jenkins
 - Check Jenkins console output
 - View build history
 - Check build logs
 
-### GitHub Actions
-- Go to repository → Actions tab
-- View workflow runs
-- Check logs for each step
+## 🔄 Key Differences from Monorepo
+
+| Feature | Monorepo | Separate Repos |
+|---------|----------|----------------|
+| **Structure** | `dev/` and `prod/` folders | Two separate folders |
+| **Repositories** | 1 GitHub repo | 2 GitHub repos |
+| **CI/CD** | Shared workflows | Separate workflows |
+| **Syncing** | Auto-sync dev→prod | **Auto-merge dev→prod** |
+| **Independence** | Shared codebase | Separate with auto-sync |
+
+## ⚠️ Important Notes
+
+1. **Automatic Syncing:**
+   - Changes in dev automatically merge into prod
+   - No manual copying needed
+   - Full control over when to deploy to production
+   - See `SETUP_AUTO_MERGE.md` for setup instructions
+
+2. **Separate GitHub Repos:**
+   - Each repository has its own GitHub Actions
+   - Each repository can have its own Jenkins job
+   - No conflicts between dev and prod
+
+3. **Deployment:**
+   - GitHub Actions validates but doesn't deploy
+   - Jenkins actually deploys to servers
+   - You can use both or just one
+
+4. **Ports:**
+   - Dev: `80` (frontend), `8000` (backend)
+   - Prod: `80` (nginx), backend proxied through nginx
 
 ## 🐛 Troubleshooting
-
-### Jenkins Issues
-- Check Jenkins agent has Docker installed
-- Verify Docker registry credentials
-- Check Jenkins logs: `docker logs <jenkins-container>`
 
 ### GitHub Actions Issues
 - Check workflow logs in Actions tab
 - Verify repository secrets are set
 - Ensure GitHub Actions is enabled for the repository
+
+### Jenkins Issues
+- Check Jenkins agent has Docker installed
+- Verify Docker registry credentials
+- Check Jenkins logs: `docker logs <jenkins-container>`
 
 ### Deployment Issues
 - Check Docker containers: `docker ps`
@@ -193,4 +267,3 @@ docker-compose up -d
 - [Jenkins Pipeline Documentation](https://www.jenkins.io/doc/book/pipeline/)
 - [GitHub Actions Documentation](https://docs.github.com/en/actions)
 - [Docker Compose Documentation](https://docs.docker.com/compose/)
-
