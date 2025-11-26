@@ -1,35 +1,39 @@
-version: '3.8'
-
 services:
   backend:
     build: ./backend
     container_name: tutor-backend-dev
     volumes:
+      - ./backend:/app
       - dev_db_data:/app/data
-      - dev_static_volume:/app/static
     environment:
       - DEBUG=True
       - DB_PATH=/app/data/dev_db.sqlite3
+    ports:
+      - "8000:8000"
     networks:
       - dev-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   nginx:
-    build: 
-      context: ./nginx
-      dockerfile: Dockerfile
+    build: ./nginx
     container_name: tutor-nginx-dev
     ports:
       - "8080:80"
     volumes:
-      - dev_static_volume:/app/static
+      - ./backend/static:/app/static
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     networks:
       - dev-network
 
 volumes:
   dev_db_data:
-  dev_static_volume:
 
 networks:
   dev-network:
