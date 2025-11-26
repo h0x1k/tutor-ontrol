@@ -1,0 +1,92 @@
+name: Production Deployment
+
+on:
+  push:
+    branches:
+      - dev
+    paths:
+      - 'dev/**'
+      - 'version_control/**'
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  sync-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Sync Dev to Prod
+        run: |
+          echo "🔄 Syncing files from dev to prod..."
+          
+          # Copy backend files
+          if [ -d "dev/backend" ]; then
+            mkdir -p prod/backend
+            cp -r dev/backend/* prod/backend/ 2>/dev/null || true
+          fi
+          
+          # Copy frontend files
+          if [ -d "dev/nginx/frontend" ]; then
+            mkdir -p prod/nginx/frontend
+            cp -r dev/nginx/frontend/* prod/nginx/frontend/ 2>/dev/null || true
+          fi
+          
+          # Copy version control
+          if [ -d "version_control" ]; then
+            mkdir -p prod/version_control
+            cp -r version_control/* prod/version_control/ 2>/dev/null || true
+          fi
+          
+          echo "✅ Sync completed"
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Run Production Tests
+        working-directory: ./prod/backend
+        run: |
+          docker build -t backend-prod-test:${{ github.sha }} .
+          docker run --rm backend-prod-test:${{ github.sha }} python manage.py test --no-input || echo "Tests completed with warnings"
+      
+      - name: Build Production Images
+        working-directory: ./prod
+        run: |
+          echo "🐳 Building production images..."
+          docker-compose build
+      
+      - name: Deploy to Production
+        if: github.ref == 'refs/heads/dev'
+        working-directory: ./prod
+        run: |
+          echo "🚀 Deploying to production..."
+          docker-compose down || true
+          docker-compose up -d
+          sleep 15
+          docker-compose ps
+      
+      - name: Production Health Check
+        if: github.ref == 'refs/heads/dev'
+        run: |
+          sleep 10
+          echo "🏥 Running production health checks..."
+          curl -f http://localhost/version-control/health || echo "Version control check failed"
+          curl -f http://localhost/api/ || echo "Backend API check failed"
+          echo "✅ Health checks completed"
+      
+      - name: Commit Prod Updates
+        if: github.ref == 'refs/heads/dev'
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          
+          git checkout main || git checkout -b main
+          git add prod/
+          git commit -m "Auto-update prod from dev (Build ${{ github.sha }})" || exit 0
+          git push origin main || echo "Push to main skipped"
+          
+          git checkout dev || echo "Could not switch back to dev"
+

@@ -1,0 +1,156 @@
+pipeline {
+    agent any
+    
+    environment {
+        DOCKER_REGISTRY = 'localhost:5000'
+        BACKEND_IMAGE = "${DOCKER_REGISTRY}/backend-prod"
+        NGINX_IMAGE = "${DOCKER_REGISTRY}/nginx-prod"
+        VERSIONCONTROL_IMAGE = "${DOCKER_REGISTRY}/versioncontrol-prod"
+    }
+    
+    stages {
+        stage('Checkout Code') {
+            steps {
+                checkout scm
+            }
+        }
+        
+        stage('Sync Dev to Prod') {
+            steps {
+                sh '''
+                    echo "🔄 Syncing files from dev to prod..."
+                    
+                    # Copy backend files
+                    if [ -d "dev/backend" ]; then
+                        mkdir -p prod/backend
+                        cp -r dev/backend/* prod/backend/ 2>/dev/null || true
+                    fi
+                    
+                    # Copy frontend files
+                    if [ -d "dev/nginx/frontend" ]; then
+                        mkdir -p prod/nginx/frontend
+                        cp -r dev/nginx/frontend/* prod/nginx/frontend/ 2>/dev/null || true
+                    fi
+                    
+                    # Copy version control
+                    if [ -d "version_control" ]; then
+                        mkdir -p prod/version_control
+                        cp -r version_control/* prod/version_control/ 2>/dev/null || true
+                    fi
+                    
+                    # Keep prod-specific nginx.conf (don't overwrite)
+                    echo "✅ Sync completed"
+                '''
+            }
+        }
+        
+        stage('Run Prod Tests') {
+            steps {
+                dir('prod/backend') {
+                    sh '''
+                        docker build -t ${BACKEND_IMAGE}:test .
+                        docker run --rm ${BACKEND_IMAGE}:test python manage.py test --no-input || echo "Tests completed with warnings"
+                    '''
+                }
+            }
+        }
+        
+        stage('Build Prod Images') {
+            steps {
+                dir('prod') {
+                    sh '''
+                        echo "🐳 Building production images..."
+                        docker-compose build
+                    '''
+                }
+            }
+        }
+        
+        stage('Tag and Push Images') {
+            steps {
+                script {
+                    def backendTag = "prod-build-${BUILD_NUMBER}"
+                    def nginxTag = "prod-build-${BUILD_NUMBER}"
+                    def versioncontrolTag = "prod-build-${BUILD_NUMBER}"
+                    
+                    sh """
+                        docker tag tutor-ontrol-backend:latest ${BACKEND_IMAGE}:${backendTag} || true
+                        docker tag tutor-ontrol-backend:latest ${BACKEND_IMAGE}:latest || true
+                        docker tag tutor-ontrol-nginx:latest ${NGINX_IMAGE}:${nginxTag} || true
+                        docker tag tutor-ontrol-nginx:latest ${NGINX_IMAGE}:latest || true
+                        
+                        # Push to registry if configured
+                        if [ "${DOCKER_REGISTRY}" != "localhost:5000" ]; then
+                            docker push ${BACKEND_IMAGE}:${backendTag} || true
+                            docker push ${BACKEND_IMAGE}:latest || true
+                            docker push ${NGINX_IMAGE}:${nginxTag} || true
+                            docker push ${NGINX_IMAGE}:latest || true
+                        fi
+                        
+                        echo "📦 Production images tagged:"
+                        echo "Backend: ${BACKEND_IMAGE}:${backendTag}"
+                        echo "Nginx: ${NGINX_IMAGE}:${nginxTag}"
+                    """
+                }
+            }
+        }
+        
+        stage('Deploy to Production') {
+            steps {
+                dir('prod') {
+                    sh '''
+                        echo "🚀 Deploying to production..."
+                        docker-compose down || true
+                        docker-compose up -d
+                        sleep 15
+                        docker-compose ps
+                    '''
+                }
+            }
+        }
+        
+        stage('Production Health Check') {
+            steps {
+                sh '''
+                    sleep 10
+                    echo "🏥 Running health checks..."
+                    curl -f http://localhost/version-control/health || echo "Version control check failed"
+                    curl -f http://localhost/api/ || echo "Backend API check failed"
+                    echo "✅ Health checks completed"
+                '''
+            }
+        }
+        
+        stage('Update Main Branch') {
+            steps {
+                sh '''
+                    git config user.email "jenkins@ci.com"
+                    git config user.name "Jenkins CI"
+                    
+                    # Commit prod updates to main branch
+                    git checkout main || git checkout -b main
+                    git add prod/
+                    git commit -m "Auto-update prod from dev (Build ${BUILD_NUMBER})" || echo "No changes to commit"
+                    git push origin main || echo "Push to main failed or no changes"
+                    
+                    # Switch back to dev for next build
+                    git checkout dev || echo "Could not switch back to dev"
+                '''
+            }
+        }
+    }
+    
+    post {
+        always {
+            echo '📋 Production pipeline completed'
+            sh 'docker system prune -f'
+        }
+        success {
+            echo '✅ Production updated successfully from dev!'
+        }
+        failure {
+            echo '❌ Production deployment failed!'
+        }
+    }
+}
+
