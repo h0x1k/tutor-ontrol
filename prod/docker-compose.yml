@@ -18,8 +18,10 @@ services:
     container_name: tutor-nginx-prod
     ports:
       - "80:80"
+      - "443:443"
     volumes:
       - prod_static_volume:/app/static
+      - ./nginx/ssl:/etc/nginx/ssl:ro
     depends_on:
       - backend
     networks:
