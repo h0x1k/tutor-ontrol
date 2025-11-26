@@ -1,0 +1,15 @@
+services:
+  versioncontrol:
+    build:
+      context: ../version_control
+      dockerfile: Dockerfile
+    container_name: tutor-versioncontrol-dev
+    ports:
+      - "8001:8001"
+    networks:
+      - dev-network
+
+networks:
+  dev-network:
+    driver: bridge
+
