@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "🚀 Starting Production Environment..."
+echo "🚀 Starting Development Environment..."
 
 # Проверка наличия Docker
 if ! command -v docker &> /dev/null; then
@@ -20,16 +20,16 @@ if command -v docker &> /dev/null && docker compose version &> /dev/null; then
     DOCKER_COMPOSE_CMD="docker compose"
 fi
 
-# Переходим в папку prod
-cd prod
+# Переходим в папку dev
+cd dev
 
-echo "📦 Building and starting production containers..."
+echo "📦 Building and starting development containers..."
 $DOCKER_COMPOSE_CMD down
 $DOCKER_COMPOSE_CMD build --no-cache
 $DOCKER_COMPOSE_CMD up -d
 
 echo "⏳ Waiting for services to start..."
-sleep 15
+sleep 10
 
 # Проверяем статус контейнеров
 echo "🔍 Checking container status..."
@@ -37,17 +37,16 @@ $DOCKER_COMPOSE_CMD ps
 
 # Проверяем доступность приложения
 echo "🔗 Testing application accessibility..."
-if curl -f http://localhost:80 > /dev/null 2>&1; then
-    echo "✅ Production environment is running successfully!"
-    echo "🌐 Application: http://localhost"
-    echo "🔧 Backend API: http://localhost/api/"
+if curl -f http://localhost:8080 > /dev/null 2>&1; then
+    echo "✅ Development environment is running successfully!"
+    echo "🌐 Frontend: http://localhost:8080"
+    echo "🔧 Backend API: http://localhost:8080/api/"
 else
-    echo "⚠️  Application is starting... Please wait a moment and check http://localhost"
+    echo "⚠️  Application is starting... Please wait a moment and check http://localhost:8080"
 fi
 
 echo ""
 echo "📝 Useful commands:"
-echo "   docker logs tutor-backend-prod    # Backend logs"
-echo "   docker logs tutor-nginx-prod      # Nginx logs"
-echo "   docker-compose down              # Stop production environment"
-echo "   docker-compose logs -f           # Follow all logs"
+echo "   docker logs tutor-backend-dev    # Backend logs"
+echo "   docker logs tutor-nginx-dev      # Nginx logs"
+echo "   docker-compose down              # Stop development environment"
