@@ -55,7 +55,8 @@
 import { ref, computed, onMounted } from 'vue';
 import axios from 'axios';
 
-axios.defaults.baseURL = 'http://localhost:8000';
+// Use relative paths - nginx will proxy /api/ to backend over HTTPS
+axios.defaults.baseURL = '';
 
 export default {
   name: 'LessonManagement',
