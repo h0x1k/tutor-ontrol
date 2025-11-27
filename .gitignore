@@ -33,8 +33,8 @@ build/
 Thumbs.db
 
 # SSL Certificates (development only)
-nginx/ssl/*.pem
-!nginx/ssl/.gitkeep
+**/nginx/ssl/*.pem
+!**/nginx/ssl/.gitkeep
 
 # Environment
 .env
@@ -43,3 +43,6 @@ nginx/ssl/*.pem
 # Logs
 *.log
 
+# Database files
+*.sqlite3
+*.db

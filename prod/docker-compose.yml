@@ -1,0 +1,75 @@
+services:
+  # Local Docker Registry for image versioning
+  registry:
+    image: registry:2
+    container_name: docker-registry-prod
+    ports:
+      - "5000:5000"
+    volumes:
+      - registry_data_prod:/var/lib/registry
+    networks:
+      - prod-network
+    restart: unless-stopped
+
+  # Django Backend
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    image: localhost:5000/backend-prod:latest
+    container_name: tutor-backend-prod
+    ports:
+      - "8000:8000"
+    volumes:
+      - db_data_prod:/app/data
+      - static_volume_prod:/app/static
+    environment:
+      - DEBUG=False
+      - DB_PATH=/app/data/prod_db.sqlite3
+    networks:
+      - prod-network
+    depends_on:
+      - registry
+    restart: unless-stopped
+
+  # Nginx Reverse Proxy + Frontend
+  nginx:
+    build:
+      context: .
+      dockerfile: Dockerfile.nginx
+    image: localhost:5000/nginx-prod:latest
+    container_name: tutor-nginx-prod
+    ports:
+      - "80:80"
+    volumes:
+      - static_volume_prod:/app/static
+    depends_on:
+      - backend
+      - registry
+    networks:
+      - prod-network
+    restart: unless-stopped
+
+  # Version Control Service
+  versioncontrol:
+    build:
+      context: ./version_control
+      dockerfile: Dockerfile
+    image: localhost:5000/versioncontrol-prod:latest
+    container_name: tutor-versioncontrol-prod
+    ports:
+      - "8001:8001"
+    networks:
+      - prod-network
+    depends_on:
+      - registry
+    restart: unless-stopped
+
+volumes:
+  db_data_prod:
+  static_volume_prod:
+  registry_data_prod:
+
+networks:
+  prod-network:
+    driver: bridge

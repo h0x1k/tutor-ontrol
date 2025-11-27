@@ -2,88 +2,142 @@
 
 This project demonstrates a complete containerized multi-service application with CI/CD pipeline using Jenkins and Docker Registry.
 
-## 🚀 Quick Start
-
-### Start All Services
-
-```bash
-docker-compose up -d --build
-```
-
-### Access the Application
-
-- **Frontend:** http://localhost
-- **Backend API:** http://localhost/api/
-- **Version Control:** http://localhost/version-control/
-- **Docker Registry:** http://localhost:5000/v2/
-
 ## 📁 Project Structure
 
 ```
 tutor-ontrol/
-├── backend/                 # Django backend application
-├── frontend/               # Vue.js frontend application
-├── nginx/                  # Nginx configuration
-├── version_control/         # Version control service (FastAPI)
-├── tutor/                  # Django app module
-├── docs/                   # Documentation files
-├── Dockerfile.backend       # Backend container build
-├── Dockerfile.nginx        # Nginx container build
-├── docker-compose.yml      # Multi-container orchestration
-├── Jenkinsfile             # CI/CD pipeline configuration
+├── dev/                    # Development environment (SELF-CONTAINED)
+│   ├── backend/            # Django backend
+│   ├── frontend/           # Vue.js frontend
+│   ├── nginx/              # Nginx configuration
+│   ├── version_control/    # Version control service
+│   ├── tutor/              # Django app module
+│   ├── docker-compose.yml  # Dev services
+│   ├── Dockerfile.backend  # Backend container
+│   ├── Dockerfile.nginx    # Frontend container
+│   ├── Jenkinsfile         # Dev CI/CD pipeline
+│   └── README.md           # Dev documentation
+│
+├── prod/                   # Production environment (SELF-CONTAINED)
+│   ├── backend/            # Django backend (auto-synced from dev)
+│   ├── frontend/           # Vue.js frontend (auto-synced from dev)
+│   ├── nginx/              # Nginx configuration (auto-synced from dev)
+│   ├── version_control/    # Version control service
+│   ├── tutor/              # Django app module
+│   ├── docker-compose.yml  # Prod services
+│   ├── Dockerfile.backend  # Backend container
+│   ├── Dockerfile.nginx    # Frontend container
+│   ├── Jenkinsfile         # Prod CI/CD pipeline
+│   └── README.md           # Prod documentation
+│
+├── docs/                   # Documentation
+├── .github/workflows/      # GitHub Actions
+│   └── sync-dev-to-prod.yml # Auto-sync workflow
 └── README.md               # This file
 ```
 
-## 📚 Documentation
+## 🔄 Dev to Prod Auto-Sync
 
-All documentation is available in the [`docs/`](./docs/) folder:
+**Automatic synchronization:** When you push changes to `dev/` folder, GitHub Actions automatically syncs them to `prod/`.
 
-- **[LAB_SETUP.md](./docs/LAB_SETUP.md)** - Lab setup and requirements
-- **[HOW_TO_RUN.md](./docs/HOW_TO_RUN.md)** - Detailed run instructions
-- **[HOW_CI_CD_WORKS.md](./docs/HOW_CI_CD_WORKS.md)** - CI/CD pipeline explanation
-- **[CI_CD_README.md](./docs/CI_CD_README.md)** - CI/CD documentation
-- **[TROUBLESHOOTING.md](./docs/TROUBLESHOOTING.md)** - Common issues and solutions
+### How It Works
 
-## 🔄 CI/CD Pipeline (Jenkins)
+1. **Make changes in `dev/`** folder
+2. **Commit and push** to repository
+3. **GitHub Actions** detects changes in `dev/`
+4. **Automatically copies** files from `dev/` to `prod/`
+5. **Commits and pushes** the synced changes
 
-The Jenkins pipeline automatically:
-1. Checks out code from repository
-2. Builds Docker images with version tags (build-XX)
-3. Runs containerized tests
-4. Pushes images to local registry
-5. Deploys the application
-6. Merges fix branch to main (if applicable)
+## 🚀 Quick Start
 
-See [Jenkinsfile](./Jenkinsfile) for pipeline configuration.
+### Development Environment (Self-Contained)
+
+```bash
+cd dev
+docker-compose up -d --build
+```
+
+Access at: http://localhost
+
+**Note:** The `dev/` folder is completely self-contained. You can run it independently.
+
+### Production Environment (Self-Contained)
+
+```bash
+cd prod
+docker-compose up -d --build
+```
+
+Access at: http://localhost
+
+**Note:** The `prod/` folder is completely self-contained. You can run it independently.
+
+## ✅ Self-Contained Folders
+
+Both `dev/` and `prod/` folders are **completely independent**:
+
+- ✅ All code files included
+- ✅ All Dockerfiles included
+- ✅ All configuration files included
+- ✅ Can run independently with `docker-compose up`
+- ✅ No need to reference parent directories
+- ✅ Each folder has its own README.md
 
 ## 🐳 Docker Services
 
-- **Backend** - Django application (port 8000)
-- **Nginx** - Frontend + Reverse Proxy (port 80)
-- **Registry** - Docker Registry for image versioning (port 5000)
-- **Version Control** - FastAPI service (port 8001)
+### Dev Environment
+- **Backend:** `localhost:5000/backend-dev:latest`
+- **Nginx:** `localhost:5000/nginx-dev:latest`
+- **Version Control:** `localhost:5000/versioncontrol-dev:latest`
+- **Registry:** Port `5000`
+- **Network:** `dev-network`
 
-## 📦 Image Versioning
+### Prod Environment
+- **Backend:** `localhost:5000/backend-prod:latest`
+- **Nginx:** `localhost:5000/nginx-prod:latest`
+- **Version Control:** `localhost:5000/versioncontrol-prod:latest`
+- **Registry:** Port `5000`
+- **Network:** `prod-network`
 
-Images are automatically tagged with:
-- `build-{BUILD_NUMBER}` - Specific build version
-- `latest` - Most recent build
+## 🔄 CI/CD Pipeline
 
-All images stored in local Docker Registry at `localhost:5000`.
+### Dev Pipeline (`dev/Jenkinsfile`)
+- Builds dev images
+- Runs tests
+- Deploys to dev environment
+- Tags images as `backend-dev`, `nginx-dev`, etc.
+
+### Prod Pipeline (`prod/Jenkinsfile`)
+- Builds prod images
+- Runs tests
+- Deploys to prod environment
+- Tags images as `backend-prod`, `nginx-prod`, etc.
+
+## 📚 Documentation
+
+- **Dev:** See `dev/README.md`
+- **Prod:** See `prod/README.md`
+- **Setup Guide:** See `docs/DEV_PROD_SETUP.md`
+- **All Docs:** See `docs/` folder
 
 ## ✅ Lab Requirements
 
-- ✅ Multi-container application
+- ✅ Multi-container application (dev and prod)
+- ✅ Self-contained dev and prod folders
 - ✅ Docker Registry for versioning
-- ✅ Jenkins CI/CD pipeline
+- ✅ Jenkins CI/CD pipeline (separate for dev/prod)
 - ✅ Image versioning (build-XX)
 - ✅ Containerized testing
 - ✅ Automatic deployment
-- ✅ Branch merging automation
+- ✅ Auto-sync from dev to prod
 
-## 📖 More Information
+## 🎯 Workflow
 
-For detailed documentation, see the [docs/](./docs/) folder.
+1. **Develop** in `dev/` folder (self-contained)
+2. **Test** in dev environment
+3. **Push** to repository
+4. **Auto-sync** to `prod/` via GitHub Actions
+5. **Deploy** prod when ready (self-contained)
 
 ---
 
