@@ -1,10 +1,11 @@
 services:
-  # Local Docker Registry for image versioning
+  # Local Docker Registry for image versioning (shared with dev on port 5001)
+  # Note: Using dev registry, or change to 5002 if you want separate registries
   registry:
     image: registry:2
     container_name: docker-registry-prod
     ports:
-      - "5000:5000"
+      - "5002:5000"  # Different port than dev (5001)
     volumes:
       - registry_data_prod:/var/lib/registry
     networks:
@@ -16,10 +17,10 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.backend
-    image: localhost:5000/backend-prod:latest
+    image: localhost:5002/backend-prod:latest
     container_name: tutor-backend-prod
     ports:
-      - "8000:8000"
+      - "8002:8000"  # Different port than dev (8000)
     volumes:
       - db_data_prod:/app/data
       - static_volume_prod:/app/static
@@ -37,10 +38,10 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.nginx
-    image: localhost:5000/nginx-prod:latest
+    image: localhost:5002/nginx-prod:latest
     container_name: tutor-nginx-prod
     ports:
-      - "80:80"
+      - "8080:80"  # Different port than dev (80)
     volumes:
       - static_volume_prod:/app/static
     depends_on:
@@ -55,10 +56,10 @@ services:
     build:
       context: ./version_control
       dockerfile: Dockerfile
-    image: localhost:5000/versioncontrol-prod:latest
+    image: localhost:5002/versioncontrol-prod:latest
     container_name: tutor-versioncontrol-prod
     ports:
-      - "8001:8001"
+      - "8003:8001"  # Different port than dev (8001)
     networks:
       - prod-network
     depends_on:

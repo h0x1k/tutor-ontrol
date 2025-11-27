@@ -72,31 +72,20 @@ Access at: http://localhost
 
 **Note:** The `prod/` folder is completely self-contained. You can run it independently.
 
-## ✅ Self-Contained Folders
-
-Both `dev/` and `prod/` folders are **completely independent**:
-
-- ✅ All code files included
-- ✅ All Dockerfiles included
-- ✅ All configuration files included
-- ✅ Can run independently with `docker-compose up`
-- ✅ No need to reference parent directories
-- ✅ Each folder has its own README.md
-
 ## 🐳 Docker Services
 
 ### Dev Environment
-- **Backend:** `localhost:5000/backend-dev:latest`
-- **Nginx:** `localhost:5000/nginx-dev:latest`
-- **Version Control:** `localhost:5000/versioncontrol-dev:latest`
-- **Registry:** Port `5000`
+- **Backend:** `localhost:5001/backend-dev:latest`
+- **Nginx:** `localhost:5001/nginx-dev:latest`
+- **Version Control:** `localhost:5001/versioncontrol-dev:latest`
+- **Registry:** Port `5001` (changed from 5000 to avoid macOS AirPlay conflict)
 - **Network:** `dev-network`
 
 ### Prod Environment
-- **Backend:** `localhost:5000/backend-prod:latest`
-- **Nginx:** `localhost:5000/nginx-prod:latest`
-- **Version Control:** `localhost:5000/versioncontrol-prod:latest`
-- **Registry:** Port `5000`
+- **Backend:** `localhost:5001/backend-prod:latest`
+- **Nginx:** `localhost:5001/nginx-prod:latest`
+- **Version Control:** `localhost:5001/versioncontrol-prod:latest`
+- **Registry:** Port `5001`
 - **Network:** `prod-network`
 
 ## 🔄 CI/CD Pipeline
@@ -113,18 +102,51 @@ Both `dev/` and `prod/` folders are **completely independent**:
 - Deploys to prod environment
 - Tags images as `backend-prod`, `nginx-prod`, etc.
 
+## 🧪 Testing
+
+### Test Jenkins Pipeline Components
+
+```bash
+./test-jenkins.sh
+```
+
+This will test:
+- ✅ Docker Registry (port 5001)
+- ✅ Docker builds
+- ✅ Registry push/pull
+- ✅ Application endpoints
+- ⚠️ Jenkins installation
+
+### Install Jenkins
+
+**For macOS:**
+```bash
+# Option 1: Docker (Recommended)
+docker run -d -p 8080:8080 -p 50000:50000 --name jenkins jenkins/jenkins:lts
+
+# Option 2: Homebrew
+brew install jenkins-lts
+brew services start jenkins-lts
+```
+
+**For Linux:**
+```bash
+./INSTALL_JENKINS.sh
+```
+
 ## 📚 Documentation
 
 - **Dev:** See `dev/README.md`
 - **Prod:** See `prod/README.md`
 - **Setup Guide:** See `docs/DEV_PROD_SETUP.md`
+- **Jenkins Setup:** See `docs/JENKINS_SETUP.md` (if exists)
 - **All Docs:** See `docs/` folder
 
 ## ✅ Lab Requirements
 
 - ✅ Multi-container application (dev and prod)
 - ✅ Self-contained dev and prod folders
-- ✅ Docker Registry for versioning
+- ✅ Docker Registry for versioning (port 5001)
 - ✅ Jenkins CI/CD pipeline (separate for dev/prod)
 - ✅ Image versioning (build-XX)
 - ✅ Containerized testing

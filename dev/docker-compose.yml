@@ -4,7 +4,7 @@ services:
     image: registry:2
     container_name: docker-registry-dev
     ports:
-      - "5000:5000"
+      - "5001:5000"
     volumes:
       - registry_data_dev:/var/lib/registry
     networks:
@@ -16,7 +16,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.backend
-    image: localhost:5000/backend-dev:latest
+    image: localhost:5001/backend-dev:latest
     container_name: tutor-backend-dev
     ports:
       - "8000:8000"
@@ -37,7 +37,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.nginx
-    image: localhost:5000/nginx-dev:latest
+    image: localhost:5001/nginx-dev:latest
     container_name: tutor-nginx-dev
     ports:
       - "80:80"
@@ -55,7 +55,7 @@ services:
     build:
       context: ./version_control
       dockerfile: Dockerfile
-    image: localhost:5000/versioncontrol-dev:latest
+    image: localhost:5001/versioncontrol-dev:latest
     container_name: tutor-versioncontrol-dev
     ports:
       - "8001:8001"
