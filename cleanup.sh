@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash 
 
 echo "🧹 Cleaning up Docker environment..."
 
