@@ -7,6 +7,13 @@ pipeline {
         NGINX_IMAGE = "${DOCKER_REGISTRY}/nginx-prod"
     }
     
+    triggers {
+        // Triggered by dev pipeline or GitHub push via webhook
+        // Enable webhook in Jenkins job settings
+        // Fallback: Poll every 10 minutes
+        pollSCM('H/10 * * * *')
+    }
+    
     stages {
         stage('Checkout Code') {
             steps {
