@@ -62,7 +62,7 @@ pipeline {
         
         stage('Version and Push Prod Images') {
             steps { 
-                script {
+                script { 
                     def backendTag = "prod-build-${BUILD_NUMBER}"
                     def nginxTag = "prod-build-${BUILD_NUMBER}"
                     
